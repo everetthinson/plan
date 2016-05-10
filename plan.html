@@ -1,0 +1,353 @@
+﻿<!-- Plan Information -->
+<div class="portal-content my-plan-container" style="margin-top: 0px; padding-top: 20px;">
+<div style="text-align: right;">
+    <a href="" ng-click="goTranslations('plan')">Translate Page</a>
+</div>
+<div ng-show="vm.member.isActive" class="header-group header-group-h2">
+    <h2>
+        {{vm.member.planType}} Plan
+    </h2>
+    <span class="header-supplemental">			 
+		<strong>{{ 'Current_Plan_Effective' | translate }} {{vm.member.effectiveDate | date : 'M/d/yyyy'}}</strong> 
+		({{ 'Plan_member_since' | translate }} {{vm.member.firstEffectiveDate | date : 'M/d/yyyy'}})
+	</span>
+</div>
+<div ng-hide="vm.member.valid" class="header-group header-group-h2">
+    <h2>
+        Your Plan is no longer active. Please contact Customer Adcovacy, 1-800-321-7947 or send a secure message by clicking the Message menu item, if you have any questions.
+    </h2>
+</div>
+<div ng-show="vm.member.valid && vm.member.effectiveDate && !vm.member.isActive" class="header-group header-group-h2">
+    <h2>
+        {{vm.member.planType}} Plan
+    </h2>
+    <span class="header-supplemental">
+		{{ 'Current_Plan_Effective' | translate }} {{vm.member.effectiveDate | date : 'M/d/yyyy'}} - 
+		<strong>
+			Terminated Effective {{vm.member.endDate | date : 'M/d/yyyy'}}
+		</strong>
+		(Plan Member since {{vm.member.firstEffectiveDate | date : 'M/d/yyyy'}})
+	</span>
+</div>
+
+<div ng-if="vm.member.valid && vm.member.isActive" class="paymentcontainer">
+
+<section class="clearfix planpremiumcontainer"
+         ng-show="((vm.member.medicalBillingInfo && vm.member.medicalBillingInfo.amountDue > 0)
+		 || (vm.member.supplementalBillingInfo && vm.member.supplementalBillingInfo.amountDue > 0))
+		  && !vm.member.isEmployeeContract && vm.showBankOfAmericaNewUI">
+    <div>
+
+        <!--<div class="not-active"></div>-->
+        <!-- Premiums -->
+        <payment-button member-is-contract-owner="vm.member.memberIsContractOwner"
+                        billing-info="vm.member.medicalBillingInfo"></payment-button>
+
+        <!--<div class="not-active not-active2"></div>-->
+        <!-- Premiums/Supplmental -->
+        <payment-button member-is-contract-owner="vm.member.memberIsContractOwner"
+                        billing-info="vm.member.supplementalBillingInfo"></payment-button>
+    </div>
+</section>
+
+<!-- [Payment History] -->
+<a id="payment-history" class="pull-right"
+   href="#/payment-history">
+    Payment History
+</a>
+
+<a ng-show="plan.isMemberAnEmployee && showHra && configBools.showHraInfo"
+   class="health-spending-account"
+   href="/#/hra">
+    <i class="icon icon-new-window-link-color"></i>
+    {{ 'HRA_Available_Balance' | translate }}:
+    <span class="currency">$</span>
+    <span class="payment">{{ availableBalance.dollar }}<span class="cents">{{ availableBalance.cent }}</span></span>
+
+</a>
+
+
+<section class="my-plan-payment clearfix"
+         ng-show="plan.amountDue > 0 && 
+			!vm.member.isEmployeeContract && 
+			vm.member.memberIsContractOwner &&
+			!vm.showBankOfAmericaNewUI">
+    <h3>
+        <span class="currency">$</span><span class="amount">{{plan.amountDue | currency:""}}</span>
+        <span class="header-supplemental due-date">
+					Due by <br />{{plan.dueByDate | date : 'M/d/yyyy'}}
+				</span>
+    </h3>
+    <div class="right-buttons">
+        <a ng-if="plan.medicalPaymentUrl"
+           href="api/v1/ExternalLinks/MakeAPayment?Type=Medical&MemberId={{memberNumber}}"
+           class="btn action-button"
+           ng-class="{'plan-page-payment-buttons': plan.medicalPaymentUrl && plan.supplementalPaymentUrl}"
+           title="{{ plan.medicalPaymentTitle }}">
+            Pay My Medical Premium
+        </a>
+        <a ng-if="plan.supplementalPaymentUrl"
+           href="api/v1/ExternalLinks/MakeAPayment?Type=Supplemental&MemberId={{memberNumber}}"
+           class="btn action-button"
+           ng-class="{'plan-page-payment-buttons': plan.medicalPaymentUrl && plan.supplementalPaymentUrl}"
+           title="{{ plan.supplementalPaymentTitle }}">
+            Pay My Supplemental Premium
+        </a>
+        <a id="payment-history"
+           href="#/payment-history"
+           class="btn action-button gray"
+           ng-class="{'plan-page-payment-buttons': plan.medicalPaymentUrl && plan.supplementalPaymentUrl}">
+            Payment History
+        </a>
+    </div>
+    <p class="mobile-payment-message">Online payment is not available for mobile devices.</p>
+</section>
+
+<div class="top-section clearfix">
+
+    <div class="copay-members-column">
+        <section class="my-plan-copayments">
+            <h3 class="collapsible collapse-header-toggle" swhp-collapsible=''>
+                <i class="icon icon-collapsible"></i>
+                {{ 'Copays' | translate }}
+                <span class="header-supplemental">(Due at time of service)</span>
+                <span class="info-button-container">
+							<a tabindex="0" data-trigger="focus" data-container="body" class="info-button" role="button" data-toggle="popover" data-placement="auto"
+							   data-content="A copayment (copay) is a fixed amount you pay either for a covered health service at time of visit, or for a medication included in your prescription drug plan." data-swhp-tooltip=''>
+								<i class="icon icon-info"></i>
+								<span class="sr-only">View Details</span>
+							</a>
+						</span>
+            </h3>
+
+            <div>
+
+                <div ng-show="copays == null">
+                    <span>Your membership is conditional.  Your copays and other information will be visible once your payment is processed.</span>
+                </div>
+
+                <div ng-hide="copays == null">
+                    <div>
+                        <div class="tabs-wrapper">
+                            <ul id="myTab" class="nav nav-tabs">
+                                <li class="copay-tier active" ng-show="copayTabExists(1)">
+                                    <a class="tier-link" data-toggle="tab" href="#copayTab1" onclick="return false;">
+                                        <span class="copay-tier-type">{{tierTitles.tier1}}</span>
+                                        <span class="copay-tier-tier">{{ 'Tier One' | translate }}</span>
+                                        <span class="copay-tier-cost">$</span>
+                                    </a>
+                                </li>
+                                <li class="copay-tier" ng-show="copayTabExists(2)">
+                                    <a class="tier-link" data-toggle="tab" href="#copayTab2" onclick="return false;">
+                                        <span class="copay-tier-type">{{tierTitles.tier2}}</span>
+                                        <span class="copay-tier-tier">{{ 'Tier_Two' | translate }}</span>
+                                        <span class="copay-tier-cost">$ $</span>
+                                    </a>
+                                </li>
+                                <li class="copay-tier" ng-show="copayTabExists(3)">
+                                    <a class="tier-link" data-toggle="tab" href="#copayTab3" onclick="return false;">
+                                        <span class="copay-tier-type">{{tierTitles.tier3}}</span>
+                                        <span class="copay-tier-tier">{{ 'Tier_Three' | translate }}</span>
+                                        <span class="copay-tier-cost">$ $ $</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div id="myTabContent" class="tab-content copay-content">
+                            <div id="copayTab1" class="tab-pane copay-content-pane fade active in" ng-show="copayTabExists(1)">
+                                <div copay-pane tier="1"></div>
+                            </div>
+                            <div id="copayTab2" class="tab-pane copay-content-pane fade" ng-show="copayTabExists(2)">
+                                <div copay-pane tier="2"></div>
+                            </div>
+                            <div id="copayTab3" class="tab-pane copay-content-pane fade" ng-show="copayTabExists(3)">
+                                <div copay-pane tier="3"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+        <section class="my-plan-covered-members">
+
+            <h3 class="collapsible collapsible-begin-collapsed" swhp-collapsible=''>
+                <i class="icon icon-collapsible"></i>
+                <span>{{ 'Covered Members' | translate }}</span>
+                <span class="header-supplemental">({{coveredMembersList.length}})</span>
+            </h3>
+
+            <div>
+                <dl class="simple-table clearfix border-suffocated" ng-repeat="coveredMember in coveredMembersList">
+                    <dt>{{coveredMember.firstName}} {{coveredMember.lastName}}</dt>
+                    <dd>
+                        <span class="currency">#</span>{{coveredMember.memberNumber}}
+                    </dd>
+                </dl>
+            </div>
+
+        </section>
+
+        <section ng-show="showPlanDocuments" class="plan-documents">
+            <h3 class="collapsible collapsible-begin-collapsed" swhp-collapsible=''>
+                <i class="icon icon-collapsible"></i>
+                Plan Documents
+            </h3>
+            <div>
+                <div class="additional-link additional-link-doc" ng-repeat="document in documentList">
+                    <a style="cursor: pointer;" href="" ng-click="onViewDocumentCommand(document.id)">
+                        <i class="icon icon-pdf"></i>
+                        {{document.documentType.description}}
+                    </a>
+                </div>
+                <div class="additional-link additional-link-doc">
+                    <a href="/Content/Pdf/Static/HMO.pdf" target="_blank">
+                        <i class="icon icon-pdf"></i>
+                        Prior Authorization-Commercial (HMO/POS)-Effective July 1, 2015
+                    </a>
+                </div>
+                <div ng-show="planTypeInfo.isMedicarePlan" class="additional-link additional-link-doc">
+                    <a href="/Content/Pdf/Static/Medicare.pdf" target="_blank">
+                        <i class="icon icon-pdf"></i>
+                        Prior Authorization (SeniorCare/MedicareAdvantage)
+                    </a>
+                </div>
+                <div class="additional-link additional-link-doc">
+                    <a href="/Content/Pdf/Static/Member-Rights-Responsibilities.pdf" target="_blank">
+                        <i class="icon icon-pdf"></i>
+                        Member Rights and Responsiblities
+                    </a>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h3>
+                <a href="#/taxforms">Tax Forms</a>
+            </h3>
+        </section>
+    </div>
+    <div mini-card member="loggedInMember()"/>
+</div>
+<section ng-show="!planTypeInfo.isFutureDatedPlan">
+    <div class="deductible-section-container">
+        <!-- Deductible & Out-of-Pocket Max -->
+        <h2>
+            Deductible & Out-of-Pocket Max
+            <span class="header-supplemental"> Usage as of {{ plan.usageAsOfDate | date : 'M/d/yyyy' }} </span>
+            <span class="info-button-container">
+						<a tabindex="0" data-trigger="focus" data-container="body" class="info-button" role="button" data-toggle="popover" data-placement="auto"
+						   data-swhp-tooltip=""
+						   data-content="A <span style='font-weight: bold;'>Deductible</span> is a specified amount of money the insured must pay before an insurance company will pay a claim. <br/>An <span style='font-weight: bold;'>out-of-pocket</span> maximum is the most you'll have to pay during a policy period (usually a year) for health care services. Once you've reached your out-of-pocket maximum, your plan begins to pay 100% of the allowed amount for covered services.">
+							<i class="icon icon-info"></i>
+							<span class="sr-only">View Details</span>
+						</a>
+					</span>
+        </h2>
+
+        <div ng-if="!contractIsSubscriberOnly">
+            <section class="spending-chart-family-container row" ng-hide="contractIsSubscriberOnly">
+                <div class="spending-chart spending-chart-family-deduciable col-sm-12 col-md-6">
+                    <div class="header-group-desktop">
+                        <h3 class="collapsible collapsible-begin-collapsed collapsible-desktop-disable" data-swhp-collapsible-breakpoint="768">
+                            <i class="icon icon-collapsible"></i>
+                            Family Deductible
+                        </h3>
+                    </div>
+                    <div>
+                        <div spending-chart position="spendingPositions.deductible" limit="spendingLimits.deductible" titles="tierTitles"></div>
+                    </div>
+                </div>
+                <div class="spending-chart spending-chart-family-oop col-sm-12 col-md-6">
+                    <div class="header-group-desktop">
+                        <h3 class="collapsible collapsible-begin-collapsed collapsible-desktop-disable" data-swhp-collapsible-breakpoint="768">
+                            <i class="icon icon-collapsible"></i>
+                            Family Out-of-Pocket Max
+                        </h3>
+                    </div>
+                    <div>
+                        <div spending-chart position="spendingPositions.outOfPocketMax" limit="spendingLimits.outOfPocketMax" titles="tierTitles"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div ng-show="!contractIsSubscriberOnly">
+            <p class="individual-plan-individual-select">
+                View usage for:
+                <select ng-model="selectedMember" ng-options="member as member.firstName for member in coveredMembers" ng-change="onSelectedMemberChange()" swhp-selectability="true" class="selectpicker"></select>
+            </p>
+        </div>
+        <p ng-show="contractIsSubscriberOnly" class="individual-plan-individual-select" style="margin-top: 15px; margin-bottom: 2px">
+            Viewing usage for: {{selectedMember.firstName}} {{selectedMember.lastName}}
+        </p>
+
+        <section class="spending-plan-individual-container row">
+            <div class="spending-chart spending-chart-individual-deductible col-sm-12 col-md-6">
+                <div class="header-group-desktop">
+                    <h3 class="collapsible collapsible-begin-collapsed collapsible-desktop-disable" data-swhp-collapsible-breakpoint="768">
+                        <i class="icon icon-collapsible"></i>
+                        Individual Deductible
+                    </h3>
+                </div>
+                <div spending-chart position="selectedMember.spendingPositions.deductible" limit="selectedMember.spendingLimits.deductible" titles="tierTitles"></div>
+            </div>
+            <div class="spending-chart spending-chart-individual-oop col-sm-12 col-md-6">
+                <div class="header-group-desktop">
+                    <h3 class="collapsible collapsible-begin-collapsed collapsible-desktop-disable" data-swhp-collapsible-breakpoint="768">
+                        <i class="icon icon-collapsible"></i>
+                        Individual Out-of-Pocket Max
+                    </h3>
+                </div>
+                <div spending-chart position="selectedMember.spendingPositions.outOfPocketMax" limit="selectedMember.spendingLimits.outOfPocketMax" titles="tierTitles"></div>
+            </div>
+        </section>
+    </div>
+</section>
+<section>
+    <div class="explanation">
+        <div class="header-group header-group-h2">
+            <h2>Explanation of Coverage</h2>
+            <span class="info-button-container">
+						<a tabindex="0" data-trigger="focus" data-container="body" class="info-button" role="button" data-toggle="popover" data-placement="auto"
+						   data-content="your-content-here" data-swhp-tooltip="">
+							<i class="icon icon-info"></i>
+							<span class="sr-only">View Details</span>
+						</a>
+					</span>
+        </div>
+        <div class="explanation-content">
+            <categorized-benefits tier-counts="tierCols" side-items="categorizedBenefits.leftSideItems" show-riders-expanded="showRidersExpanded()"></categorized-benefits>
+            <categorized-benefits tier-counts="tierCols" side-items="categorizedBenefits.rightSideItems" show-riders-expanded="showRidersExpanded()"></categorized-benefits>
+        </div>
+    </div>
+</section>
+
+<!--<a ng-show="plan.isMemberAnEmployee && showHra && configBools.showHraInfo"
+       class="payment-links health-spending-account"
+       href="/#/hra">
+    <i class="icon icon-new-window-link-color"></i>
+    HRA Available Balance:
+    <span class="currency">$</span>
+    <span class="payment">{{ availableBalance.dollar }}<span class="cents">{{ availableBalance.cent }}</span></span>
+
+</a>-->
+
+<div>
+    <user-message-modal user-messages="userMessages"></user-message-modal>
+</div>
+</div>
+<div ng-if="!vm.member.isActive">
+    <section ng-if="vm.member.valid">
+        <h3>
+            <a href="#/claims">Claims</a>
+        </h3>
+    </section>
+    <section>
+        <h3>
+            <a href="#/taxforms">Tax Forms</a>
+        </h3>
+    </section>
+</div>
+</div>
